@@ -74,10 +74,14 @@ function drawCenter()
     love.graphics.circle("line", width / 2, height / 2, circleRadius)
 end
 
-function drawPlayer()
+function getPlayerPosition()
+    return { x = player.rectangle.x + player.rectangle.width / 2, y = player.rectangle.y + player.rectangle.height / 2 }
+end
+
+function getPaddleAngle()
     width, height = love.graphics.getDimensions()
 
-    playerPosition = { x = player.rectangle.x + player.rectangle.width / 2, y = player.rectangle.y + player.rectangle.height / 2 }
+    playerPosition = getPlayerPosition()
     centerPosition = { x = width / 2, y = height / 2 }
 
     playerPositionToCenter = { x = playerPosition.x - centerPosition.x, y = playerPosition.y - centerPosition.y }
@@ -89,11 +93,14 @@ function drawPlayer()
         centerPositionToFlat = { x = 0, y = -circleRadius }
     end
 
+    return getAngleBetween(centerPositionToFlat, playerPositionToCenter)
+end
 
-    angle = getAngleBetween(centerPositionToFlat, playerPositionToCenter)
+function drawPlayer()
+    playerPosition = getPlayerPosition()
 
     love.graphics.translate(playerPosition.x, playerPosition.y)
-	love.graphics.rotate(angle)
+	love.graphics.rotate(getPaddleAngle())
 	love.graphics.translate(-playerPosition.x, -playerPosition.y)
     drawRectangle(player.rectangle)
     love.graphics.origin()
@@ -110,6 +117,7 @@ function love.update(dt)
     
     centerToMouseVector = { x = mousePoint.x - centerPoint.x, y = mousePoint.y - centerPoint.y }
     normalizedCenterToMouseVector = normalizeVector(centerToMouseVector)
+
     positionVector = { 
         x = 
             (width / 2) -
