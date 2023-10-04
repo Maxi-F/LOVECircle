@@ -5,21 +5,24 @@ playerRectangle = {
     height = 20
 }
 
+initialVelocity = 150
+
 ball = {
     x = 10,
     y = 10,
     direction = { x = 0.5, y = 0.5 },
     radius = 20,
-    velocity = 150,
+    velocity = initialVelocity,
     isColliding = false
 }
 
-maxVelocity = 900
+maxVelocity = 1100
 circleRadius = 250
 
 player = {
     rectangle = playerRectangle,
-    points = 0
+    points = 0,
+    maxPoints = 0
 }
 
 COLLIDED_SIDE = {
@@ -211,6 +214,11 @@ function updateBall(dt)
     if checkCircleToRectangleCollission(ball, player.rectangle) and not ball.isColliding then
         normalizedCenterToMouseVector = getNormalizedCenterToMouseVector()
 
+        player.points = player.points + 1
+        if player.points > player.maxPoints then
+            player.maxPoints = player.points
+        end
+
         ball.direction.x = normalizedCenterToMouseVector.x * -1
         ball.direction.y = normalizedCenterToMouseVector.y * -1
         ball.velocity = clamp(ball.velocity + 50, ball.velocity, maxVelocity)
@@ -219,6 +227,29 @@ function updateBall(dt)
     if not checkCircleToRectangleCollission(ball, player.rectangle) then
         ball.isColliding = false
     end
+
+    width, height = love.graphics.getDimensions()
+
+    if ball.x + ball.radius < 0 or ball.x - ball.radius > width or ball.y + ball.radius < 0 or ball.y - ball.radius > height then
+        ball.x = width / 2
+        ball.y = height / 2
+        ball.velocity = initialVelocity
+
+        player.points = 0
+    end
+end
+
+function drawUI()
+    local font = love.graphics.getFont()
+    marginX = 40
+    marginY = 20
+
+    pointsText = "Points: " .. player.points
+    highScoreText = "High score: " .. player.maxPoints
+	local highScoreTextWidth = font:getWidth(highScoreText)
+
+    love.graphics.print(pointsText, marginX, marginY)
+    love.graphics.print(highScoreText, width - highScoreTextWidth - marginX, marginY)
 end
 
 function love.load()
@@ -227,6 +258,8 @@ function love.load()
 
     ball.x = width / 2
     ball.y = height / 2
+
+    love.graphics.setNewFont("OpenSans.ttf", 20)
 end
 
 function love.update(dt)
@@ -238,4 +271,5 @@ function love.draw()
     drawPlayer()
     drawBall()
     drawCenter()
+    drawUI()
 end
