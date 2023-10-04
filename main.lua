@@ -2,21 +2,93 @@ playerRectangle = {
     x = 20,
     y = 20,
     width = 100,
-    height = 50
+    height = 20
 }
 
 ball = {
     x = 10,
     y = 10,
-    radius = 20
+    direction = { x = 0.5, y = 0.5 },
+    radius = 20,
+    velocity = 150,
+    isColliding = false
 }
 
+maxVelocity = 900
 circleRadius = 250
 
 player = {
     rectangle = playerRectangle,
     points = 0
 }
+
+COLLIDED_SIDE = {
+    LEFT = "LEFT",
+    RIGHT = "RIGHT",
+    INSIDE = "INSIDE",
+    OUTSIDE = "OUTSIDE"
+}
+
+function getRotatedPoint(point, center, angle)
+    dx = point.x - center.x
+    dy = point.y - center.y
+
+    return {
+        x = center.x + (dx * math.cos(angle) - dy * math.sin(angle)),
+        y = center.y + (dx * math.sin(angle) + dy * math.cos(angle))
+    }
+end
+
+function getRotatedRect(rectangle, angle)
+    center = { x = rectangle.x + rectangle.width / 2, y = rectangle.y + rectangle.height / 2 }
+    
+    return {
+        topLeft = getRotatedPoint({ x = rectangle.x, y = rectangle.y }, center, angle),
+        topRight = getRotatedPoint({ x = rectangle.x + rectangle.width, y = rectangle.y }, center, angle),
+        bottomLeft = getRotatedPoint({ x = rectangle.x, y = rectangle.y + rectangle.height }, center, angle),
+        bottomRight = getRotatedPoint({ x = rectangle.x + rectangle.width, y = rectangle.y + rectangle.height }, center, angle)
+    }
+end
+
+function checkCircleCollisionBetweenPoints(circle, pointA, pointB)
+    pointsQuantity = 100
+
+    for i=0,pointsQuantity do
+        dx = i / pointsQuantity
+
+        intermediaryX = pointA.x + dx * (pointB.x - pointA.x)
+        intermediaryY = pointA.y + dx *(pointB.y - pointA.y)
+        
+        hickX = math.abs(intermediaryX - circle.x);
+        hickY = math.abs(intermediaryY - circle.y);
+
+        hypotenuse = math.sqrt((hickY * hickY) + (hickX * hickX));
+
+        if hypotenuse <= ball.radius then
+            return true
+        end
+    end
+
+    return false
+end
+
+function checkCircleToRectangleCollission(circle, oldRect)
+    rectangle = getRotatedRect(oldRect, getPaddleAngle())
+
+    pointsQuantity = 100
+
+    if checkCircleCollisionBetweenPoints(circle, rectangle.bottomLeft, rectangle.bottomRight) then
+        return COLLIDED_SIDE.INSIDE
+    elseif checkCircleCollisionBetweenPoints(circle, rectangle.topLeft, rectangle.bottomLeft) then
+        return COLLIDED_SIDE.LEFT
+    elseif checkCircleCollisionBetweenPoints(circle, rectangle.topRight, rectangle.bottomRight) then
+        return COLLIDED_SIDE.RIGHT
+    elseif checkCircleCollisionBetweenPoints(circle, rectangle.topLeft, rectangle.topRight) then
+        return COLLIDED_SIDE.OUTSIDE
+    end
+
+    return false
+end
 
 function getScalarProductBetween(aVector, anotherVector)
     return aVector.x * anotherVector.x + aVector.y * anotherVector.y
@@ -51,7 +123,13 @@ function clamp(value, min, max)
     end
 end
 
-function initGameplay()
+function getNormalizedCenterToMouseVector()
+    width, height = love.graphics.getDimensions()
+    mousePoint = { x = love.mouse.getX(), y = love.mouse.getY() }
+    centerPoint = { x = width / 2, y = height / 2 }
+    
+    centerToMouseVector = { x = mousePoint.x - centerPoint.x, y = mousePoint.y - centerPoint.y }
+    return normalizeVector(centerToMouseVector)
 end
 
 function drawRectangle(rectangle)
@@ -65,7 +143,9 @@ function drawRectangle(rectangle)
 end
 
 function drawBall()
+    love.graphics.setColor(1, 0, 0)
     love.graphics.circle("fill", ball.x, ball.y, ball.radius)
+    love.graphics.setColor(1, 1, 1)
 end
 
 function drawCenter()
@@ -106,17 +186,8 @@ function drawPlayer()
     love.graphics.origin()
 end
 
-function love.load()
-    love.window.setMode(900, 600)
-end
-
-function love.update(dt)
-    width, height = love.graphics.getDimensions()
-    mousePoint = { x = love.mouse.getX(), y = love.mouse.getY() }
-    centerPoint = { x = width / 2, y = height / 2 }
-    
-    centerToMouseVector = { x = mousePoint.x - centerPoint.x, y = mousePoint.y - centerPoint.y }
-    normalizedCenterToMouseVector = normalizeVector(centerToMouseVector)
+function updateRectangle()
+    normalizedCenterToMouseVector = getNormalizedCenterToMouseVector()
 
     positionVector = { 
         x = 
@@ -131,6 +202,36 @@ function love.update(dt)
 
     player.rectangle.x = positionVector.x
     player.rectangle.y = positionVector.y
+end
+
+function updateBall(dt)
+    ball.x = ball.x + ball.direction.x * ball.velocity * dt
+    ball.y = ball.y + ball.direction.y * ball.velocity * dt
+
+    if checkCircleToRectangleCollission(ball, player.rectangle) and not ball.isColliding then
+        normalizedCenterToMouseVector = getNormalizedCenterToMouseVector()
+
+        ball.direction.x = normalizedCenterToMouseVector.x * -1
+        ball.direction.y = normalizedCenterToMouseVector.y * -1
+        ball.velocity = clamp(ball.velocity + 50, ball.velocity, maxVelocity)
+        ball.isColliding = true
+    end
+    if not checkCircleToRectangleCollission(ball, player.rectangle) then
+        ball.isColliding = false
+    end
+end
+
+function love.load()
+    love.window.setMode(900, 600)
+    width, height = love.graphics.getDimensions()
+
+    ball.x = width / 2
+    ball.y = height / 2
+end
+
+function love.update(dt)
+    updateRectangle()
+    updateBall(dt)
 end
 
 function love.draw()
