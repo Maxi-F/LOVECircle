@@ -246,10 +246,17 @@ function drawUI()
 
     pointsText = "Points: " .. player.points
     highScoreText = "High score: " .. player.maxPoints
+    developersText = "Developed by Juan Digilio and Maximiliano Feldman"
+    fontText = "Font by Steve Matteson"
 	local highScoreTextWidth = font:getWidth(highScoreText)
+    local developersTextHeight = font:getHeight(highScoreText)
+    local fontTextWidth = font:getWidth(fontText)
+    local fontTextHeight = font:getHeight(fontText)
 
     love.graphics.print(pointsText, marginX, marginY)
     love.graphics.print(highScoreText, width - highScoreTextWidth - marginX, marginY)
+    love.graphics.print(developersText, marginX, height - marginY + 10 - developersTextHeight)
+    love.graphics.print(fontText, width - fontTextWidth - marginX, height - marginY + 10 - fontTextHeight)
 end
 
 function love.load()
