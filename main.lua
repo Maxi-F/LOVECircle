@@ -5,6 +5,12 @@ playerRectangle = {
     height = 20
 }
 
+images = {
+    background = '',
+    ball = '',
+    paddle = ''
+}
+
 initialVelocity = 150
 
 ball = {
@@ -136,6 +142,7 @@ function getNormalizedCenterToMouseVector()
 end
 
 function drawRectangle(rectangle)
+    love.graphics.setColor(0.8, 0, 0, 0.5)
     love.graphics.rectangle(
         "fill",
         rectangle.x,
@@ -143,18 +150,13 @@ function drawRectangle(rectangle)
         rectangle.width,
         rectangle.height
     )
+    love.graphics.setColor(0.8, 0, 0)
 end
 
 function drawBall()
-    love.graphics.setColor(1, 0, 0)
-    love.graphics.circle("fill", ball.x, ball.y, ball.radius)
-    love.graphics.setColor(1, 1, 1)
-end
+    ballImage = love.graphics.getImage
 
-function drawCenter()
-    width, height = love.graphics.getDimensions()
-
-    love.graphics.circle("line", width / 2, height / 2, circleRadius)
+    love.graphics.draw(images.ball, ball.x - 30, ball.y - 30, 0, 0.07, 0.07)
 end
 
 function getPlayerPosition()
@@ -182,11 +184,14 @@ end
 function drawPlayer()
     playerPosition = getPlayerPosition()
 
+    love.graphics.setColor(0.8, 0, 0)
     love.graphics.translate(playerPosition.x, playerPosition.y)
 	love.graphics.rotate(getPaddleAngle())
 	love.graphics.translate(-playerPosition.x, -playerPosition.y)
     drawRectangle(player.rectangle)
+    love.graphics.draw(images.paddle, player.rectangle.x, player.rectangle.y, 0, 0.36, 0.45)
     love.graphics.origin()
+    love.graphics.setColor(1, 1, 1)
 end
 
 function updateRectangle()
@@ -244,19 +249,42 @@ function drawUI()
     marginX = 40
     marginY = 20
 
+    love.graphics.setColor(0, 0, 0)
     pointsText = "Points: " .. player.points
     highScoreText = "High score: " .. player.maxPoints
     developersText = "Developed by Juan Digilio and Maximiliano Feldman"
     fontText = "Font by Steve Matteson"
+    local pointsTextWidth = font:getWidth(pointsText)
+    local pointsTextHeight = font:getHeight(pointsText)
 	local highScoreTextWidth = font:getWidth(highScoreText)
-    local developersTextHeight = font:getHeight(highScoreText)
+    local highScoreTextHeight = font:getHeight(highScoreText)
+    local developersTextHeight = font:getHeight(developersText)
+    local developersTextWidth = font:getWidth(developersText)
     local fontTextWidth = font:getWidth(fontText)
     local fontTextHeight = font:getHeight(fontText)
 
+    love.graphics.setColor(0, 0, 0, 0.6)
+    love.graphics.rectangle("fill", marginX - 5, marginY - 5, pointsTextWidth + 10, pointsTextHeight + 10, 10, 10)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print(pointsText, marginX, marginY)
+
+    love.graphics.setColor(0, 0, 0, 0.6)
+    love.graphics.rectangle("fill", width - highScoreTextWidth - marginX - 5, marginY - 5, highScoreTextWidth + 10, highScoreTextHeight + 10, 10, 10)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print(highScoreText, width - highScoreTextWidth - marginX, marginY)
-    love.graphics.print(developersText, marginX, height - marginY + 10 - developersTextHeight)
-    love.graphics.print(fontText, width - fontTextWidth - marginX, height - marginY + 10 - fontTextHeight)
+    
+    
+    love.graphics.setColor(0, 0, 0, 0.6)
+    love.graphics.rectangle("fill", marginX - 5, height - marginY + 15 - developersTextHeight - 5, developersTextWidth + 10, developersTextHeight + 10, 10, 10)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(developersText, marginX, height - marginY + 15 - developersTextHeight)
+    
+    love.graphics.setColor(0, 0, 0, 0.6)
+    love.graphics.rectangle("fill", width - fontTextWidth - marginX - 5, height - marginY + 15 - fontTextHeight - 5, fontTextWidth + 10, fontTextHeight + 10, 10, 10)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(fontText, width - fontTextWidth - marginX, height - marginY + 15 - fontTextHeight)
+    
+    love.graphics.setColor(1, 1, 1)
 end
 
 function love.load()
@@ -267,6 +295,10 @@ function love.load()
     ball.y = height / 2
 
     love.graphics.setNewFont("OpenSans.ttf", 20)
+    
+    images.background = love.graphics.newImage("blackHole.jpg")
+    images.ball = love.graphics.newImage("ball.png")
+    images.paddle = love.graphics.newImage("paddle.png")
 end
 
 function love.update(dt)
@@ -275,8 +307,8 @@ function love.update(dt)
 end
 
 function love.draw()
+    love.graphics.draw(images.background, -230, -75, 0, 0.35, 0.35)
     drawPlayer()
     drawBall()
-    drawCenter()
     drawUI()
 end
